@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.env
+
+# IDE configs
+.vscode/
+.idea/
+
+# Migrations (optional — if you want to exclude them at early dev stage)
+#migrations/
+
+# System files
+.DS_Store
+Thumbs.db
