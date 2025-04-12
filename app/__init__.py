@@ -26,12 +26,12 @@ def create_app():
             print("❌ Database connection failed:", e)
     # Register blueprints
     # from app.routes.api import api_bp
-    # from app.routes.views import views_bp
+    from app.routes.views import views_bp
     # app.register_blueprint(api_bp)
-    # app.register_blueprint(views_bp)
+    app.register_blueprint(views_bp)
 
-    @app.route('/')
-    def index():
-        return '🚀 Flask server is up and running!'
+    # @app.route('/')
+    # def index():
+    #     return '🚀 Flask server is up and running!'
     
     return app
