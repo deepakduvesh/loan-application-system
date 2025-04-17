@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">New Loan Application</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="d-flex justify-content-end mb-3">
+            <a href="/applications/download/pdf" class="btn btn-secondary me-2">Download PDF</a>
+            <a href="/applications/download/doc" class="btn btn-secondary">Download DOC</a>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form id="loanForm" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="applicationType" class="form-label">Application Method</label>
+                        <select class="form-select" id="applicationType" name="application_type" required>
+                            <option value="form" {% if not data %}selected{% endif %}>Fill Form</option>
+                            <option value="upload" {% if data %}selected{% endif %}>Upload PDF</option>
+                        </select>
+                    </div>
+
+                    <div id="formFields" {% if data %}style="display: none;"{% endif %}>
+                        <h5 class="mt-4">Personal Information</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" value="{{ data['First Name'] if data and 'First Name' in data else '' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" value="{{ data['Last Name'] if data and 'Last Name' in data else '' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                            <input type="text" class="form-control" id="dateOfBirth" name="date_of_birth" value="{{ data['Date of Birth'] if data and 'Date of Birth' in data else '' }}" required >
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ data['Email'] if data and 'Email' in data else '' }}" required >
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ data['Phone'] if data and 'Phone' in data else '' }}" required >
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" required >{{ data['Address'] if data and 'Address' in data else '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="city" value="{{ data['City'] if data and 'City' in data else '' }}" required >
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="state" class="form-label">State</label>
+                                <input type="text" class="form-control" id="state" name="state" value="{{ data['State'] if data and 'State' in data else '' }}" required >
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="zip" class="form-label">Zip Code</label>
+                                <input type="text" class="form-control" id="zip" name="zip_code" value="{{ data['Zip Code'] if data and 'Zip Code' in data else '' }}" required >
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="employmentStatus" class="form-label">Employment Status</label>
+                            <select class="form-select" id="employmentStatus" name="employment_status" required >
+                                <option value="yes" {% if data and data.get('Employment Status') == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="no" {% if data and data.get('Employment Status') == 'No' %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="annualIncome" class="form-label">Annual Income ($)</label>
+                            <input type="number" class="form-control" id="annualIncome" name="annual_income" min="0" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="creditScore" class="form-label">Credit Score</label>
+                            <input type="number" class="form-control" id="creditScore" name="credit_score" min="0" max="850" required>
+                        </div>
+
+                        <h5 class="mt-4">Loan Details</h5>
+                        <div class="mb-3">
+                            <label for="loanAmount" class="form-label">Loan Amount ($)</label>
+                            <input type="number" class="form-control" id="loanAmount" name="loan_amount" min="1" required >
+                             </div>
+
+                        <div class="mb-3">
+                            <label for="loanPurpose" class="form-label">Loan Purpose</label>
+                            <select class="form-select" id="loanPurpose" name="loan_purpose" required >
+                                <option value="home_improvement" {% if data and data.get('Loan Purpose') == 'Home Improvement' %}selected{% endif %}>Home Improvement</option>
+                                <option value="education" {% if data and data.get('Loan Purpose') == 'Education' %}selected{% endif %}>Education</option>
+                                <option value="medical" {% if data and data.get('Loan Purpose') == 'Medical Expenses' %}selected{% endif %}>Medical Expenses</option>
+                                <option value="debt_consolidation" {% if data and data.get('Loan Purpose') == 'Debt Consolidation' %}selected{% endif %}>Debt Consolidation</option>
+                                <option value="business" {% if data and data.get('Loan Purpose') == 'Business' %}selected{% endif %}>Business</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="loanTerm" class="form-label">Loan Term (months)</label>
+                            <input type="number" class="form-control" id="loanTerm" name="loan_term" min="1" required >
+                            </div>
+                    </div>
+                    <div id="uploadFields" {% if not data %}style="display: none;"{% endif %}>
+                        <div class="mb-3">
+                            <label for="pdfFile" class="form-label">Upload PDF Application</label>
+                            <input class="form-control" type="file" id="pdfFile" name="application_form" accept=".pdf" {% if not data %}required{% endif %} >
+                            <div class="form-text">Please upload a PDF containing your loan application details.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Submit Application</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('applicationType').addEventListener('change', function () {
+    const formFields = document.getElementById('formFields');
+    const uploadFields = document.getElementById('uploadFields');
+    const fileInput = document.getElementById('pdfFile');
+    const formElements = formFields.querySelectorAll('input, select, textarea');
+
+    if (this.value === 'upload') {
+        formFields.style.display = 'none';
+        uploadFields.style.display = 'block';
+        fileInput.required = true;
+        formElements.forEach(element => {
+            element.removeAttribute('required');
+        });
+    } else {
+        formFields.style.display = 'block';
+        uploadFields.style.display = 'none';
+        fileInput.removeAttribute('required');
+        formElements.forEach(element => {
+            element.setAttribute('required', '');
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const applicationTypeSelect = document.getElementById('applicationType');
+    const fileInput = document.getElementById('pdfFile');
+    const formElements = document.getElementById('formFields').querySelectorAll('input, select, textarea');
+
+    if (applicationTypeSelect.value === 'upload') {
+        fileInput.required = true;
+        formElements.forEach(element => {
+            element.removeAttribute('required');
+        });
+    } else {
+        fileInput.removeAttribute('required');
+        formElements.forEach(element => {
+            element.setAttribute('required', '');
+        });
+    }
+});
+</script>
+{% endblock %}
