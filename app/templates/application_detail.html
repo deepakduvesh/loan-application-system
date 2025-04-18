@@ -1,0 +1,143 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Application Details</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/applications">Applications</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">#{{ application.id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Applicant Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">{{ applicant.first_name }} {{ applicant.last_name }}</dd>
+                        
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">{{ applicant.email }}</dd>
+                        
+                        <dt class="col-sm-4">Phone</dt>
+                        <dd class="col-sm-8">{{ applicant.phone }}</dd>
+                        
+                        <dt class="col-sm-4">Annual Income</dt>
+                        <dd class="col-sm-8">${{ "%.2f"|format(applicant.annual_income) }}</dd>
+                        
+                        <dt class="col-sm-4">Credit Score</dt>
+                        <dd class="col-sm-8">{{ applicant.credit_score or 'N/A' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Loan Details</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Application Date</dt>
+                        <dd class="col-sm-8">{{ application.application_date.strftime('%Y-%m-%d') }}</dd>
+                        
+                        <dt class="col-sm-4">Loan Amount</dt>
+                        <dd class="col-sm-8">${{ "%.2f"|format(application.loan_amount) }}</dd>
+                        
+                        <dt class="col-sm-4">Loan Purpose</dt>
+                        <dd class="col-sm-8">{{ application.loan_purpose }}</dd>
+                        
+                        <dt class="col-sm-4">Loan Term</dt>
+                        <dd class="col-sm-8">{{ application.loan_term }} months</dd>
+                        
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge 
+                                {% if application.status == 'approved' %}bg-success
+                                {% elif application.status == 'rejected' %}bg-danger
+                                {% else %}bg-warning text-dark{% endif %}">
+                                {{ application.status|title }}
+                            </span>
+                        </dd>
+                        
+                        {% if application.risk_score %}
+                        <dt class="col-sm-4">Risk Score</dt>
+                        <dd class="col-sm-8">{{ application.risk_score }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if application.status == 'pending' %}
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Decision</h5>
+                </div>
+                <div class="card-body">
+                    <form id="decisionForm" method="POST" action="/api/applications/{{ application.id }}/status">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Decision</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="approved">Approve</option>
+                                <option value="rejected">Reject</option>
+                            </select>
+                        </div>
+                        
+                        <!-- <div class="mb-3">
+                            <label for="decisionReason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="decisionReason" name="decision_reason" rows="3" required></textarea>
+                        </div> -->
+                        
+                        <div class="mb-3">
+                            <label for="officerNotes" class="form-label">Officer Notes</label>
+                            <textarea class="form-control" id="officerNotes" name="officer_notes" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Submit Decision</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('decisionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    fetch(this.action, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            status: document.getElementById('status').value,
+            // decision_reason: document.getElementById('decisionReason').value,
+            officer_notes: document.getElementById('officerNotes').value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            window.location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>
+{% endblock %}
