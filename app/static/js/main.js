@@ -1,4 +1,3 @@
-// Handle form submissions with fetch API
 document.addEventListener('DOMContentLoaded', function() {
     const forms = document.querySelectorAll('form[data-ajax="true"]');
     
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Status filter
+    
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
         statusFilter.addEventListener('change', function() {
@@ -34,4 +33,27 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `/applications?status=${status}`;
         });
     }
+});
+
+document.getElementById('decisionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    fetch(this.action, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            status: document.getElementById('status').value,
+            officer_notes: document.getElementById('officerNotes').value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message); 
+            window.location.reload(); 
+        }
+    })
+    .catch(error => console.error('Error:', error));
 });
