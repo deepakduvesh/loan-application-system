@@ -5,6 +5,7 @@ from app.models.application import Application
 from app import db
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
+from app.utils.riskScore import RiskScore
 
 # Define the Blueprint for views
 views_bp = Blueprint('views', __name__)
@@ -74,13 +75,22 @@ def new_application():
                 applicant.annual_income = data['annual_income']
                 applicant.credit_score = data['credit_score']
                 db.session.flush()
+            
+            # Calculate risk score
+            risk_score = RiskScore.calculate_risk_score(
+                credit_score=applicant.credit_score,
+                annual_income=applicant.annual_income,
+                loan_amount=data['loan_amount']
+            )
 
             # Create a new loan application
             application = Application(
                 applicant_id=applicant.id,
                 loan_amount=data['loan_amount'],
                 loan_purpose=data['loan_purpose'],
-                loan_term=data['loan_term']
+                loan_term=data['loan_term'],
+                risk_score=risk_score,
+                status='pending'
             )
             db.session.add(application)
             db.session.commit()
@@ -103,3 +113,45 @@ def application_detail(application_id):
     application = Application.query.get_or_404(application_id)
     applicant = Applicant.query.get_or_404(application.applicant_id)
     return render_template('application_detail.html', application=application, applicant=applicant)
+
+@views_bp.route('/applications', methods=['GET'])
+def all_applications():
+    try:
+        # Fetch all applications
+        applications = Application.query.all()
+        return render_template('all_applications.html', applications=applications)
+    except SQLAlchemyError as e:
+        flash(f'Database error: {str(e)}', 'danger')
+        return redirect(url_for('views.index'))
+    except Exception as e:
+        flash(f'Unexpected error: {str(e)}', 'danger')
+        return redirect(url_for('views.index'))
+    
+@views_bp.route('/api/applications/<int:application_id>/status', methods=['PUT'])
+def update_application_status(application_id):
+    try:
+        # Fetch the application
+        application = Application.query.get_or_404(application_id)
+
+        # Parse the request data
+        data = request.get_json()
+        status = data.get('status')
+        officer_notes = data.get('officer_notes', '')
+
+        if status not in ['approved', 'rejected']:
+            return {"message": "Invalid status value"}, 400
+
+        # Update the application status and officer notes
+        application.status = status
+        application.officer_notes = officer_notes
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        return {"message": "Application status updated successfully"}, 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return {"message": f"Database error: {str(e)}"}, 500
+    except Exception as e:
+        return {"message": f"Unexpected error: {str(e)}"}, 500
